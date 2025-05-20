@@ -1,0 +1,68 @@
+# Dependencias
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Archivos de entorno (contienen información sensible)
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+*.env
+
+# Archivos de configuración (podrían contener información sensible)
+config/local.js
+config/*.key
+config/*.pem
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Directorio de build/compilación
+/dist
+/build
+/out
+
+# Directorios de caché
+.cache/
+.npm/
+.yarn/
+.eslintcache
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Archivos de los editores/IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+.history/
+
+# Archivos temporales
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# Archivos de cobertura de pruebas
+coverage/
+.nyc_output/
+
+# Otros archivos específicos de este proyecto
+tokens.json
+credentials.json
+sessions/
