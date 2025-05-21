@@ -14,7 +14,6 @@ dotenv.config();
 
 // Create the Express app
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Body parser, reading data from body into req.body
 app.use(express.json());
@@ -64,9 +63,5 @@ app.get('/', (req, res) => {
   `);
 });
 
-// Initialize the server
-app.listen(PORT, () => {
-  console.log(`Servidor en http://localhost:${PORT}`);
-});
+module.exports = app
 
-module.exports = app;
