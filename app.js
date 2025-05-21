@@ -8,6 +8,7 @@ const fs = require('fs');
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
+const usersRoutes = require('./routes/userRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -50,6 +51,7 @@ if (!fs.existsSync(externalProjectsPath)) {
 
 // Routes
 app.use('/', authRoutes);
+app.use('/', usersRoutes);
 
 // Main route
 app.get('/', (req, res) => {

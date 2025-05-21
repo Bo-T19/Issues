@@ -1,22 +1,31 @@
 const mongoose = require('mongoose')
 
+//User schema
 const userSchema = new mongoose.Schema({
-    id: {
-        type: String
-    },
-    name: {
-        type: String
+    autodesk_id: {
+        type: String,
+        required: true,
+        unique: true
     },
     email: {
-        type: String
+        type: String,
+        required: true,
+        unique: true
     },
-    defaultRole: {
-        type: String
+    name: {
+        type: String,
+        required: true
     },
-    companyName: {
-        type: String
+    company_name: String,
+    last_sync: {
+        type: Date,
+        default: Date.now
     }
 })
+
+//Indexes
+userSchema.index({ autodesk_id: 1 });
+userSchema.index({ email: 1 });
 
 const User = mongoose.model('User', userSchema)
 
