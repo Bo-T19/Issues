@@ -4,7 +4,8 @@ const usersController = require('../controllers/userControllers');
 const authControllers = require('../controllers/authControllers');
 
 // Get Autodesk Users
-router.get('/api/users/acc', authControllers.ensureValidToken, usersController.getAutodeskUsers);
+router.get('/api/users/acc',
+    usersController.getAutodeskUsers);
 
 /*
 // Synch users (requires authorization)

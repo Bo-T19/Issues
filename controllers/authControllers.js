@@ -73,7 +73,7 @@ async function get2LeggedToken() {
 // Middleware that verifies and refreshes the token if necessary
 exports.ensureValidToken = async (req, res, next) => {
   // Check if we need 3-legged or 2-legged token
-  const authType = req.query.authType || req.body.authType || '3legged';
+ const authType = req.query?.authType || req.body?.authType || '3legged'; 
   
   if (authType === '2legged') {
     // For 2-legged flow we don't need user session
