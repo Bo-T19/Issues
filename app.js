@@ -1,9 +1,10 @@
-
 const express = require('express');
 const dotenv = require('dotenv');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
+const path = require('path');
+const fs = require('fs');
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
@@ -32,6 +33,22 @@ app.use(session({
   }
 }));
 
+// Ensure configs directory exists
+const configsDir = path.join(__dirname, 'configs');
+if (!fs.existsSync(configsDir)) {
+  fs.mkdirSync(configsDir);
+}
+
+// Create external projects file if it doesn't exist
+const externalProjectsPath = path.join(configsDir, 'externalProjects.json');
+if (!fs.existsSync(externalProjectsPath)) {
+  fs.writeFileSync(
+    externalProjectsPath, 
+    JSON.stringify({ externalProjects: [] }, null, 2),
+    'utf8'
+  );
+}
+
 // Routes
 app.use('/', authRoutes);
 
@@ -40,7 +57,10 @@ app.get('/', (req, res) => {
   res.send(`
     <h1>Autodesk Platform Services Auth</h1>
     <p>Bienvenido a la aplicación de autenticación</p>
-    <a href="/auth">Iniciar autenticación con Autodesk</a>
+    <ul>
+      <li><a href="/auth">Iniciar autenticación con Autodesk (3-legged)</a></li>
+      <li><a href="/auth/2legged">Obtener token 2-legged</a></li>
+    </ul>
   `);
 });
 

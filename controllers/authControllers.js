@@ -44,25 +44,74 @@ async function refreshAccessToken(refreshToken) {
   }
 }
 
+// Get 2-legged token for application-level access
+async function get2LeggedToken() {
+  const basicAuth = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
+  
+  try {
+    const response = await axios.post('https://developer.api.autodesk.com/authentication/v2/token', null, {
+      params: {
+        grant_type: 'client_credentials',
+        scope: process.env.TWO_LEGGED_SCOPES || 'data:read'
+      },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${basicAuth}`
+      }
+    });
+    
+    return {
+      access_token: response.data.access_token,
+      expires_at: Date.now() + (response.data.expires_in * 1000)
+    };
+  } catch (error) {
+    console.error('Error al obtener token 2-legged:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
 // Middleware that verifies and refreshes the token if necessary
 exports.ensureValidToken = async (req, res, next) => {
-  if (!req.session.tokenInfo) {
-    return res.redirect('/auth');
-  }
-
-  // Verify if the token has expired or is about to expire
-  if (isTokenExpired(req.session.tokenInfo.expires_at - 300000)) {
-    try {
-      // Refresh token
-      const newTokenInfo = await refreshAccessToken(req.session.tokenInfo.refresh_token);
-      req.session.tokenInfo = newTokenInfo;
-    } catch (error) {
-    // If refresh fails, redirect to the main auth route
+  // Check if we need 3-legged or 2-legged token
+  const authType = req.query.authType || req.body.authType || '3legged';
+  
+  if (authType === '2legged') {
+    // For 2-legged flow we don't need user session
+    if (!req.app.locals.twoLeggedToken || isTokenExpired(req.app.locals.twoLeggedToken.expires_at)) {
+      try {
+        // Get new 2-legged token
+        const tokenInfo = await get2LeggedToken();
+        req.app.locals.twoLeggedToken = tokenInfo;
+      } catch (error) {
+        return res.status(500).send('Error al obtener token 2-legged');
+      }
+    }
+    
+    // Add token to request for downstream handlers
+    req.tokenInfo = req.app.locals.twoLeggedToken;
+    return next();
+  } else {
+    // 3-legged flow (user-specific)
+    if (!req.session.tokenInfo) {
       return res.redirect('/auth');
     }
+
+    // Verify if the token has expired or is about to expire
+    if (isTokenExpired(req.session.tokenInfo.expires_at - 300000)) {
+      try {
+        // Refresh token
+        const newTokenInfo = await refreshAccessToken(req.session.tokenInfo.refresh_token);
+        req.session.tokenInfo = newTokenInfo;
+      } catch (error) {
+        // If refresh fails, redirect to the main auth route
+        return res.redirect('/auth');
+      }
+    }
+    
+    // Add token to request for downstream handlers
+    req.tokenInfo = req.session.tokenInfo;
+    next();
   }
-  
-  next();
 };
 
 // Start the authentication flow
@@ -116,13 +165,34 @@ exports.handleCallback = async (req, res) => {
   }
 };
 
+// Get 2-legged token directly
+exports.get2LeggedToken = async (req, res) => {
+  try {
+    const tokenInfo = await get2LeggedToken();
+    // Store in application memory (not in session as it's not user-specific)
+    req.app.locals.twoLeggedToken = tokenInfo;
+    
+    res.json({
+      message: 'Token 2-legged obtenido correctamente',
+      expires_at: new Date(tokenInfo.expires_at).toISOString(),
+      remaining_time: Math.floor((tokenInfo.expires_at - Date.now()) / 1000) + ' segundos'
+    });
+  } catch (error) {
+    res.status(500).send(`Error al obtener token 2-legged: ${error.message}`);
+  }
+};
+
 // Test endpoint to verify the token
 exports.testToken = (req, res) => {
+  // tokenInfo comes from the middleware
+  const tokenInfo = req.tokenInfo;
+  const tokenType = req.query.authType === '2legged' ? '2-legged' : '3-legged';
+  
   res.json({
-    mensaje: 'Token válido',
+    mensaje: `Token ${tokenType} válido`,
     token_info: {
-      expires_at: new Date(req.session.tokenInfo.expires_at).toISOString(),
-      remaining_time: Math.floor((req.session.tokenInfo.expires_at - Date.now()) / 1000) + ' segundos'
+      expires_at: new Date(tokenInfo.expires_at).toISOString(),
+      remaining_time: Math.floor((tokenInfo.expires_at - Date.now()) / 1000) + ' segundos'
     }
   });
 };

@@ -63,6 +63,7 @@ coverage/
 .nyc_output/
 
 # Otros archivos específicos de este proyecto
+externalProjects.json
 tokens.json
 credentials.json
 sessions/
