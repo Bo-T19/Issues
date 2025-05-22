@@ -5,6 +5,7 @@ const authControllers = require('../controllers/authControllers');
 
 // Get Autodesk Users
 router.get('/api/users/acc',
+    authControllers.ensure2LeggedToken,
     usersController.getAutodeskUsers);
 
 /*

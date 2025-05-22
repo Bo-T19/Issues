@@ -7,12 +7,11 @@ const { get2LeggedToken } = require('./authControllers');
 dotenv.config();
 const accountId = process.env.ACCOUNT_ID
 
-exports.getAutodeskUsers = async () => {
+exports.getAutodeskUsers = async (req, res) => {
 
     try {
         //Get the two legged token
-        const tokenInfo = await get2LeggedToken();
-        const token = tokenInfo.access_token;
+        const token = req.tokenInfo.access_token;
 
         // APS endpoint that gets the user of a specific account
         const url = `https://developer.api.autodesk.com/hq/v1/accounts/${accountId}/users`;
@@ -23,10 +22,17 @@ exports.getAutodeskUsers = async () => {
                 'Content-Type': 'application/json'
             }
         });
-
-        return response.data.results || [];
+        res.json({
+            success: true,
+            data: response.data || [],
+            total: response.data?.length || 0
+        });
     } catch (error) {
         console.error('Error al obtener usuarios de Autodesk:', error.response?.data || error.message);
-        throw error;
+        res.status(500).json({
+            success: false,
+            error: 'Error al obtener usuarios de Autodesk',
+            details: error.response?.data || error.message
+        });
     }
 }
